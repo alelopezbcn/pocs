@@ -51,7 +51,7 @@ func (s *Set[E]) Pull() (next func() (E, bool), stop func()) {
 	go func() {
 		defer close(ch)
 		for v := range s.m {
-			fmt.Println("Sending value:", v)
+			fmt.Println("Sending value to ch:", v)
 			select {
 			case ch <- v:
 			case <-stopCh:
@@ -62,10 +62,12 @@ func (s *Set[E]) Pull() (next func() (E, bool), stop func()) {
 
 	next = func() (E, bool) {
 		v, ok := <-ch
+		fmt.Println("Receiving value from ch:", v)
 		return v, ok
 	}
 
 	stop = func() {
+		fmt.Println("Stopping Pull operation")
 		close(stopCh)
 	}
 
