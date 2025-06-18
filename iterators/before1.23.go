@@ -1,5 +1,7 @@
 package iterators
 
+import "fmt"
+
 type Set[E comparable] struct {
 	m map[E]struct{}
 }
@@ -40,4 +42,32 @@ func (s *Set[E]) Push(f func(E) bool) {
 			return
 		}
 	}
+}
+
+func (s *Set[E]) Pull() (next func() (E, bool), stop func()) {
+	ch := make(chan E)
+	stopCh := make(chan bool)
+
+	go func() {
+		defer close(ch)
+		for v := range s.m {
+			fmt.Println("Sending value:", v)
+			select {
+			case ch <- v:
+			case <-stopCh:
+				return
+			}
+		}
+	}()
+
+	next = func() (E, bool) {
+		v, ok := <-ch
+		return v, ok
+	}
+
+	stop = func() {
+		close(stopCh)
+	}
+
+	return next, stop
 }
